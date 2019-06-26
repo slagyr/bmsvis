@@ -30,10 +30,15 @@
       (should= ["setup" "more"] (:info (first ticks)))
       (should= ["hello there"] (:info (last ticks)))))
 
-  (it "unlabled lines go in info"
+  (it "parses error"
     (let [ticks (lines->timeline ["info: setup"
-                                  "yo"])]
-      (should= ["setup" "yo"] (:info (first ticks)))))
+                                  "error: oops!"])]
+      (should= ["oops!"] (:error (first ticks)))))
+
+  (it "parses alert"
+    (let [ticks (lines->timeline ["info: setup"
+                                  "alert: oops!"])]
+      (should= ["oops!"] (:alert (first ticks)))))
 
   (it "parses pack line"
     (let [ticks (lines->timeline ["info: setup"
@@ -65,6 +70,12 @@
       (should= 3.41161 (nth (:cells tick) 7) 0.00001)
       (should= 3.412741 (nth (:cells tick) 8) 0.00001)
       (should= 3.407463 (nth (:cells tick) 9) 0.00001)))
+
+
+  (it "unlabled lines go in error"
+    (let [ticks (lines->timeline ["info: setup"
+                                  "yo"])]
+      (should= ["yo"] (:error (first ticks)))))
 
   (it "simple data"
     (let [timeline (log->timeline (io/file "data/simple.log"))]

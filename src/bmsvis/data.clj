@@ -21,8 +21,14 @@
 (defn do-info [line tick]
   (update-in tick [:info] conj* (subs line 6)))
 
+(defn do-error [line tick]
+  (update-in tick [:error] conj* (subs line 7)))
+
+(defn do-alert [line tick]
+  (update-in tick [:alert] conj* (subs line 7)))
+
 (defn do-unlabeled [line tick]
-  (update-in tick [:info] conj* line))
+  (update-in tick [:error] conj* line))
 
 (defn do-pack [line tick]
   (let [tokens (str/split (subs line 5) #",")]
@@ -44,10 +50,12 @@
 
 (defn parse-line [line tick]
   (cond
-    (str/starts-with? line "info:") (do-info line tick)
     (str/starts-with? line "pack:") (do-pack line tick)
     (str/starts-with? line "temps:") (do-temps line tick)
     (str/starts-with? line "cells:") (do-cells line tick)
+    (str/starts-with? line "info:") (do-info line tick)
+    (str/starts-with? line "error:") (do-error line tick)
+    (str/starts-with? line "alert:") (do-alert line tick)
     :else (do-unlabeled line tick)))
 
 (defn empty-tick? [tick]
