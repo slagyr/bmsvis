@@ -11,3 +11,7 @@ pom.xml
 .lein-repl-history
 *.iml
 .idea
+node_modules
+package-lock.json
+.specljs-timestamp
+.DS_Store

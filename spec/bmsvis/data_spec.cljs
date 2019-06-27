@@ -1,16 +1,16 @@
 (ns bmsvis.data-spec
-  (:require [speclj.core :refer :all]
-            [bmsvis.data :refer :all]
-            [clojure.java.io :as io]))
+  (:require [speclj.core]
+            [bmsvis.data :as data])
+  (:require-macros [speclj.core :refer [describe context it should= should-not= after before should-contain around with]]))
 
 (describe "Data"
 
   (it "empty file"
-    (let [ticks (log->timeline (io/file "data/empty.log"))]
+    (let [ticks (data/lines->timeline [])]
       (should= 0 (count ticks))))
 
   (it "3 ticks"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "tick: 1, 2111"
                                   "info: 1"
                                   "tick: 2, 2361"
@@ -22,7 +22,7 @@
       (should= [0, 2111, 2361, 2611] (map :time ticks))))
 
   (it "parses info"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "info: more"
                                   "tick: 1, 2111"
                                   "info: hello there"])]
@@ -31,17 +31,17 @@
       (should= ["hello there"] (:info (last ticks)))))
 
   (it "parses error"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "error: oops!"])]
       (should= ["oops!"] (:error (first ticks)))))
 
   (it "parses alert"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "alert: oops!"])]
       (should= ["oops!"] (:alert (first ticks)))))
 
   (it "parses pack line"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "pack: 34.098,26.96186,0"])
           tick (first ticks)]
       (should= 34.098 (:batt_v tick) 0.001)
@@ -49,7 +49,7 @@
       (should= 0.0 (:amps tick) 0.001)))
 
   (it "parses temps line"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "temps: 32.74458,33.46426,25.26466"])
           tick (first ticks)]
       (should= 32.74458 (:temp1 tick) 0.001)
@@ -57,7 +57,7 @@
       (should= 25.26466 (:temp3 tick) 0.001)))
 
   (it "parses cells line"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "cells: 3.406709,3.410856,3.409725,3.405578,3.410856,3.413118,3.408217,3.41161,3.412741,3.407463"])
           tick (first ticks)]
       (should= 3.406709 (nth (:cells tick) 0) 0.00001)
@@ -73,14 +73,8 @@
 
 
   (it "unlabled lines go in error"
-    (let [ticks (lines->timeline ["info: setup"
+    (let [ticks (data/lines->timeline ["info: setup"
                                   "yo"])]
       (should= ["yo"] (:error (first ticks)))))
-
-  (it "simple data"
-    (let [timeline (log->timeline (io/file "data/simple.log"))]
-      (should= 62 (count timeline))
-      )
-    )
 
   )

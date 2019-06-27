@@ -1,16 +1,21 @@
 (ns bmsvis.data
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]))
+  (:require [clojure.string :as str]))
 
 (defn conj*
   [s x]
   (conj (vec s) x))
 
+(defn parse! [f v]
+     (let [result (f v)]
+       (if (js/isNaN result)
+         (throw (js/Error "parsed NaN"))
+         result)))
+
 (defn ->int [s]
-  (Integer/parseInt (str/trim s)))
+  (parse! js/parseInt (str/trim s)))
 
 (defn ->float [s]
-  (Float/parseFloat (str/trim s)))
+  (parse! js/parseFloat (str/trim s)))
 
 (defn maybe-tick [line]
   (when (str/starts-with? line "tick:")
@@ -74,8 +79,8 @@
         ticks
         (conj ticks tick)))))
 
-(defn log->timeline [filename]
-  (with-open [rdr (io/reader filename)]
-    (-> rdr
-        line-seq
-        lines->timeline)))
+;(defn log->timeline [filename]
+;  (with-open [rdr (io/reader filename)]
+;    (-> rdr
+;        line-seq
+;        lines->timeline)))
