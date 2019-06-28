@@ -12,7 +12,7 @@
 
 ; atom to store file contents
 
-(def file-data (atom " "))
+(def file-data (atom "zilch"))
 
 ;; transducer to stick on a core-async channel to manipulate all the weird javascript
 ;; event objects --- basically just takes the array of file objects or something
@@ -33,7 +33,8 @@
 (def file-reads (chan 1 extract-result))
 
 ;; function to call when a file event appears: stick it on the upload-reqs channel (which will use the transducer to grab the first file)
-(defn put-upload [e]
+(defn put-upload [observer e]
+  (observer)
   (put! upload-reqs e))
 
 ;; sit around in a loop waiting for a file to appear in the upload-reqs channel, read any such file, and when the read is successful, stick the file on the file-reads channel.
@@ -50,8 +51,8 @@
   (recur))
 
 ;; input component to allow users to upload file.
-(defn input-component []
-  [:input {:type "file" :id "file" :accept ".txt" :name "file" :on-change put-upload}])
+(defn upload-input [observer]
+  [:input {:type "file" :id "file" :accept ".txt" :name "file" :on-change (partial put-upload observer)}])
 
 ;; -------------------------
 ;; Views
@@ -59,7 +60,7 @@
 (defn home-page []
   [:div
    [:h2 "Welcome to Reagent"]
-   [input-component]
+   [upload-input]
    [:p @file-data] ; render the file contents.
    ])
 
