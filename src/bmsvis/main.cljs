@@ -49,11 +49,15 @@
 (defn chart-outer [config]
   [cells-chart-inner @config])
 
+(defn time-slider-updated [v1]
+  (let [slider (.-target v1)
+        value (.-value slider)]
+    (println "value: " value)))
+
 (defn body []
   [:div.main
-   [:h1.title "FlexBMS Log Visualizer"]
-   [:div.title-border]
    [:div.upload
+    [:h1.title "FlexBMS Log Visualizer"]
     [:label "bms.log file:"]
     [upload/upload-input file-selected]
     [:span (:upload-status @state)]]
@@ -70,7 +74,11 @@
      [chart-outer amps-atom]]
     [:div.chart
      [:p.chart-title "Temps"]
-     [chart-outer temps-atom]]]])
+     [chart-outer temps-atom]]
+    [:div.slidercontainer
+     [:input.slider {:type "range" :min 1 :max 100 :defaultValue 50 :id "time-range" :width "100%" :onChange time-slider-updated :onInput time-slider-updated}]]
+    ]])
+
 
 (defn ^:export main []
   (add-watch upload/file-data :file-uploaded file-uploaded)

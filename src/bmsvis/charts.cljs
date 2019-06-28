@@ -24,7 +24,7 @@
                            :maintainAspectRatio false}
                  :data    starting-chart-data})
 
-(def MAX 3000)
+(def MAX 100)
 
 (defn fill-cells [datasets tick]
   (if-let [cells (:cells tick)]
