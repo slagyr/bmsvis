@@ -44,13 +44,33 @@
           (update-in [:batt-pack :datasets 1 :data] conj pack-v)))
     datasets))
 
+(defn fill-amps [datasets tick]
+  (if-let [amps (:amps tick)]
+    (-> datasets
+        (update-in [:amps :labels] conj (:id tick))
+        (update-in [:amps :datasets 0 :data] conj amps))
+    datasets))
+
+(defn fill-temps [datasets tick]
+  (if-let [temp1 (:temp1 tick)]
+    (let [temp2 (:temp2 tick)
+          temp3 (:temp3 tick)]
+      (-> datasets
+          (update-in [:temps :labels] conj (:id tick))
+          (update-in [:temps :datasets 0 :data] conj temp1)
+          (update-in [:temps :datasets 1 :data] conj temp2)
+          (update-in [:temps :datasets 2 :data] conj temp3)))
+    datasets))
+
 (defn fill-datasets [datasets ticks]
   (loop [ticks ticks datasets datasets]
     (if-let [tick (first ticks)]
       (recur (rest ticks)
              (-> datasets
                  (fill-cells tick)
-                 (fill-batt-pack tick)))
+                 (fill-batt-pack tick)
+                 (fill-amps tick)
+                 (fill-temps tick)))
       datasets)))
 
 (defn bare-cells-dataset [ticks]
@@ -66,11 +86,27 @@
     {:labels   []
      :datasets [batt-v pack-v]}))
 
+(defn bare-amps-dataset []
+  {:labels   []
+   :datasets [(assoc empty-dataset :label "Amps : > 1 Charge current, < 1 Discharge current"
+                                   :borderColor "#AA3C39")]})
+
+(defn bare-temps-dataset []
+  (let [temp1 (assoc empty-dataset :label "Temp #1" :borderColor "#2D8632")
+        temp2 (assoc empty-dataset :label "Temp #2" :borderColor "#236467")
+        temp3 (assoc empty-dataset :label "Temp #3" :borderColor "#AA6D39")]
+    {:labels   []
+     :datasets [temp1 temp2 temp3]}))
+
 (defn ticks->datasets [ticks]
   (let [ticks (take MAX ticks)
         cells (bare-cells-dataset ticks)
-        batt-pack (bare-batt-pack-dataset)]
+        batt-pack (bare-batt-pack-dataset)
+        amps (bare-amps-dataset)
+        temps (bare-temps-dataset)]
     (fill-datasets {:cells     cells
-                    :batt-pack batt-pack}
+                    :batt-pack batt-pack
+                    :amps amps
+                    :temps temps}
                    ticks)))
 

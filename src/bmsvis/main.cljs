@@ -13,6 +13,8 @@
 (def state (r/atom start-state))
 (def cells-atom (r/atom charts/line-chart))
 (def batt-pack-atom (r/atom charts/line-chart))
+(def amps-atom (r/atom charts/line-chart))
+(def temps-atom (r/atom charts/line-chart))
 
 (defn file-selected []
   (swap! state assoc :upload-status "Uploading file..."))
@@ -28,8 +30,9 @@
     (swap! state #(install-ticks ticks %))
     (let [datasets (charts/ticks->datasets ticks)]
       (swap! cells-atom assoc :data (:cells datasets))
-      (prn "(:batt-pack datasets): " (:batt-pack datasets))
-      (swap! batt-pack-atom assoc :data (:batt-pack datasets)))))
+      (swap! batt-pack-atom assoc :data (:batt-pack datasets))
+      (swap! amps-atom assoc :data (:amps datasets))
+      (swap! temps-atom assoc :data (:temps datasets)))))
 
 (defn mount-chart [comp]
   (js/Chart. (r/dom-node comp) (clj->js (r/props comp))))
@@ -43,7 +46,7 @@
      :component-did-update update-chart
      :reagent-render       (fn [comp] [:canvas])}))
 
-(defn cells-chart-outer [config]
+(defn chart-outer [config]
   [cells-chart-inner @config])
 
 (defn body []
@@ -58,10 +61,16 @@
    [:div.charts
     [:div.chart
      [:p.chart-title "Cell Voltages"]
-     [cells-chart-outer cells-atom]]]
-   [:div.chart
-    [:p.chart-title "Batt/Pack Voltages"]
-    [cells-chart-outer batt-pack-atom]]])
+     [chart-outer cells-atom]]
+    [:div.chart
+     [:p.chart-title "Batt/Pack Voltages"]
+     [chart-outer batt-pack-atom]]
+    [:div.chart
+     [:p.chart-title "Amps"]
+     [chart-outer amps-atom]]
+    [:div.chart
+     [:p.chart-title "Temps"]
+     [chart-outer temps-atom]]]])
 
 (defn ^:export main []
   (add-watch upload/file-data :file-uploaded file-uploaded)

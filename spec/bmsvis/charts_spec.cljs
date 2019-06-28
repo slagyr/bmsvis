@@ -39,6 +39,22 @@
         (should= 21 (count (:data (first (:datasets volts)))))
         (should= 21 (count (:data (second (:datasets volts)))))
         ))
+
+  (it "generates amps datasets"
+      (let [ticks (data/lines->timeline (str/split-lines sample/sample))
+            amps (:amps (charts/ticks->datasets ticks))]
+        (should= (filter odd? (range 42)) (:labels amps))
+        (should= 1 (count (:datasets amps)))
+        (should= 21 (count (:data (first (:datasets amps)))))))
+
+  (it "generates temps datasets"
+      (let [ticks (data/lines->timeline (str/split-lines sample/sample))
+            temps (:temps (charts/ticks->datasets ticks))]
+        (should= [1 21 41] (:labels temps))
+        (should= 3 (count (:datasets temps)))
+        (should= 3 (count (:data (first (:datasets temps)))))
+        (should= 3 (count (:data (second (:datasets temps)))))
+        (should= 3 (count (:data (last (:datasets temps)))))))
   )
 
 
