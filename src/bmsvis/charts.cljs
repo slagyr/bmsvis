@@ -24,7 +24,10 @@
                            :maintainAspectRatio false}
                  :data    starting-chart-data})
 
-(def MAX 100)
+(def bar-chart {:type    "bar"
+                :options {:responsive          true
+                          :maintainAspectRatio false}
+                :data    starting-chart-data})
 
 (defn fill-cells [datasets tick]
   (if-let [cells (:cells tick)]
@@ -99,14 +102,13 @@
      :datasets [temp1 temp2 temp3]}))
 
 (defn ticks->datasets [ticks]
-  (let [ticks (take MAX ticks)
-        cells (bare-cells-dataset ticks)
+  (let [cells (bare-cells-dataset ticks)
         batt-pack (bare-batt-pack-dataset)
         amps (bare-amps-dataset)
         temps (bare-temps-dataset)]
     (fill-datasets {:cells     cells
                     :batt-pack batt-pack
-                    :amps amps
-                    :temps temps}
+                    :amps      amps
+                    :temps     temps}
                    ticks)))
 

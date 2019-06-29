@@ -67,7 +67,7 @@
     :else (do-unlabeled line tick)))
 
 (defn empty-tick? [tick]
-  (= {} (dissoc tick :id :time)))
+  (= {} (dissoc tick :id :_id :time)))
 
 (defn split-tick-lines [lines]
   (if (seq lines)

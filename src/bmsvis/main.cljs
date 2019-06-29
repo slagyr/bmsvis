@@ -3,9 +3,12 @@
             [bmsvis.upload :as upload]
             [bmsvis.charts :as charts]
             [reagent.core :as r]
+            [cljs.pprint :refer [pprint]]
             [cljsjs.chartjs]
             [clojure.string :as str]))
 
+;(def max-data-size 4096)
+;(def max-data-size 2048)
 (def max-data-size 1024)
 (def min-zoom 5)
 (def ln2 (.log js/Math 2))
@@ -46,10 +49,11 @@
    :zoom-max      min-zoom})
 
 (def state (r/atom start-state))
-(def cells-chart  (atom nil))
-(def batt-pack-chart  (atom nil))
-(def amps-chart  (atom nil))
-(def temps-chart  (atom nil))
+(def msg-chart (atom nil))
+(def cells-chart (atom nil))
+(def batt-pack-chart (atom nil))
+(def amps-chart (atom nil))
+(def temps-chart (atom nil))
 
 (defn file-selected []
   (swap! state assoc :upload-status "Uploading file..."))
@@ -100,14 +104,14 @@
                       calibrate-pan))
     (load-datasets)))
 
-(defn chart [chart-atom]
+(defn chart [chart-atom conf]
   (r/create-class
     {:display-name        "line-chart"
      :component-did-mount (fn [comp]
-                            (let [chart (js/Chart. (r/dom-node comp) (clj->js charts/line-chart))]
+                            (let [chart (js/Chart. (r/dom-node comp) (clj->js conf))]
                               (reset! chart-atom chart)
                               chart))
-     :reagent-render      (fn [comp] [:canvas])}))
+     :reagent-render      (fn [a] [:canvas])}))
 
 (defn body []
   [:div.main
@@ -142,18 +146,21 @@
      [:span "Viewing " [:strong (:pan-size @state)] " ticks (max)."]]]
    [:div.title-border]
    [:div.charts
+    [:div.chart.bar
+     [:p.chart-title "Info, Alert & Errors"]
+     [chart msg-chart charts/bar-chart]]
     [:div.chart
      [:p.chart-title "Cell Voltages"]
-     [chart cells-chart]]
+     [chart cells-chart charts/line-chart]]
     [:div.chart
      [:p.chart-title "Batt/Pack Voltages"]
-     [chart batt-pack-chart]]
+     [chart batt-pack-chart charts/line-chart]]
     [:div.chart
      [:p.chart-title "Amps"]
-     [chart amps-chart]]
+     [chart amps-chart charts/line-chart]]
     [:div.chart
      [:p.chart-title "Temps"]
-     [chart temps-chart]]
+     [chart temps-chart charts/line-chart]]
 
     ]])
 
