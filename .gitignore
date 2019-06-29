@@ -15,3 +15,4 @@ node_modules
 package-lock.json
 .specljs-timestamp
 .DS_Store
+public/js
