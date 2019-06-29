@@ -18,8 +18,8 @@
                                        "tick: 3, 2611"
                                        "info: 3"])]
       (should= 4 (count ticks))
-      (should= [0, 1, 2, 3] (map :id ticks))
-      (should= [0, 2111, 2361, 2611] (map :time ticks))))
+      (should= [0 1 2 3] (map :_id ticks))
+      (should= [0 2111 2361 2611] (map :time ticks))))
 
   (it "parses info"
     (let [ticks (data/lines->timeline ["info: setup"
@@ -76,4 +76,17 @@
     (let [ticks (data/lines->timeline ["info: setup"
                                        "yo"])]
       (should= ["yo"] (:error (first ticks)))))
+
+  (it "ticks have sequential ids"
+    (let [ticks (data/lines->timeline ["info: setup"
+                                       "tick: 1, 2111"
+                                       "info: 1"
+                                       "tick: 999, 2361"
+                                       "info: 2"
+                                       "tick: 1, 2611"
+                                       "info: 3"])]
+      (should= 4 (count ticks))
+      (should= [1 2 3 4] (map :id ticks))
+      (should= [0 1 999 1] (map :_id ticks))
+      (should= [0 2111 2361 2611] (map :time ticks))))
   )

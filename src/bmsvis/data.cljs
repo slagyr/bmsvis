@@ -20,15 +20,9 @@
 (defn tick? [line]
   (and line (str/starts-with? line "tick:")))
 
-(defn maybe-tick [line]
-  (when (tick? line)
-    (let [tokens (str/split (subs line 5) #",")]
-      {:id   (->int (first tokens))
-       :time (->int (second tokens))})))
-
 (defn do-tick [line tick]
   (let [tokens (str/split (subs line 5) #",")]
-    (assoc tick :id (->int (first tokens))
+    (assoc tick :_id (->int (first tokens))
                 :time (->int (second tokens)))))
 
 (defn do-info [line tick]
@@ -75,19 +69,6 @@
 (defn empty-tick? [tick]
   (= {} (dissoc tick :id :time)))
 
-;(defn lines->timeline [lines]
-;  (loop [lines lines ticks [] tick {:id 0 :time 0}]
-;    (if (seq lines)
-;      (let [line (first lines)]
-;        (if-let [new-tick (maybe-tick line)]
-;          (if (empty-tick? tick)
-;            (recur (rest lines) ticks new-tick)
-;            (recur (rest lines) (conj ticks tick) new-tick))
-;          (recur (rest lines) ticks (parse-line line tick))))
-;      (if (empty-tick? tick)
-;        ticks
-;        (conj ticks tick)))))
-
 (defn split-tick-lines [lines]
   (if (seq lines)
     (loop [before [(first lines)] after (rest lines)]
@@ -97,13 +78,16 @@
           (recur (conj* before line) (rest after)))))
     [nil nil]))
 
-(def new-tick {:id 0 :time 0})
+(defn new-tick [id]
+  {:id id :_id 0 :time 0})
 
-(defn lines->timeline [lines]
-  (let [[tick-lines remaining-lines] (split-tick-lines lines)]
-    (if (seq tick-lines)
-      (let [tick (reduce #(parse-line %2 %1) new-tick tick-lines)]
-        (if (empty-tick? tick)
-          (lines->timeline remaining-lines)
-          (lazy-seq (cons tick (lines->timeline remaining-lines)))))
-      ())))
+(defn lines->timeline
+  ([lines] (lines->timeline lines 1))
+  ([lines id]
+   (let [[tick-lines remaining-lines] (split-tick-lines lines)]
+     (if (seq tick-lines)
+       (let [tick (reduce #(parse-line %2 %1) (new-tick id) tick-lines)]
+         (if (empty-tick? tick)
+           (lines->timeline remaining-lines id)
+           (lazy-seq (cons tick (lines->timeline remaining-lines (inc id))))))
+       ()))))

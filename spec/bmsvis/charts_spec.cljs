@@ -21,7 +21,7 @@
   (it "generates cell datasets"
     (let [ticks (data/lines->timeline (str/split-lines sample/sample))
           cells (:cells (charts/ticks->datasets ticks))]
-      (should= [1 21 41] (:labels cells))
+      (should= [2 12 22] (:labels cells))
       (should= 10 (count (:datasets cells)))
       (should= (take 10 (repeat "rgba(255, 255, 255, 0)"))
                (map :backgroundColor (:datasets cells)))
@@ -34,7 +34,7 @@
   (it "generates batt/pack datasets"
       (let [ticks (data/lines->timeline (str/split-lines sample/sample))
             volts (:batt-pack (charts/ticks->datasets ticks))]
-        (should= (filter odd? (range 42)) (:labels volts))
+        (should= (range 2 23) (:labels volts))
         (should= 2 (count (:datasets volts)))
         (should= 21 (count (:data (first (:datasets volts)))))
         (should= 21 (count (:data (second (:datasets volts)))))
@@ -43,14 +43,14 @@
   (it "generates amps datasets"
       (let [ticks (data/lines->timeline (str/split-lines sample/sample))
             amps (:amps (charts/ticks->datasets ticks))]
-        (should= (filter odd? (range 42)) (:labels amps))
+        (should= (range 2 23) (:labels amps))
         (should= 1 (count (:datasets amps)))
         (should= 21 (count (:data (first (:datasets amps)))))))
 
   (it "generates temps datasets"
       (let [ticks (data/lines->timeline (str/split-lines sample/sample))
             temps (:temps (charts/ticks->datasets ticks))]
-        (should= [1 21 41] (:labels temps))
+        (should= [2 12 22] (:labels temps))
         (should= 3 (count (:datasets temps)))
         (should= 3 (count (:data (first (:datasets temps)))))
         (should= 3 (count (:data (second (:datasets temps)))))

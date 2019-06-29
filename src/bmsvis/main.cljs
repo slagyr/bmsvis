@@ -68,7 +68,6 @@
   (.update chart))
 
 (defn load-datasets []
-  (prn "@state: " @state)
   (let [{:keys [ticks pan-nth pan-start pan-size]} @state
         ticks (->> ticks
                    (drop pan-start)
@@ -90,15 +89,12 @@
 (defn pan-updated [v1]
   (let [slider (.-target v1)
         value (js/parseInt (.-value slider))]
-    (println "pan: " value)
     (swap! state assoc :pan-start value)
-    (load-datasets))
-  (println "@state: " @state))
+    (load-datasets)))
 
 (defn zoom-updated [v1]
   (let [slider (.-target v1)
         value (js/parseInt (.-value slider))]
-    (println "zoom: " value)
     (swap! state #(-> %
                       (assoc :zoom value)
                       calibrate-pan))
