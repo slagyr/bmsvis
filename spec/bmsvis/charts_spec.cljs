@@ -59,7 +59,7 @@
   (it "generates message groups"
     (let [ticks (data/lines->timeline (str/split-lines sample/sample))
           msg (charts/ticks->msg-groups ticks 22)]
-      (should= 2 (count (filter seq (:info msg))))
+      (should= 2 (count (filter seq (:infos msg))))
       (should= 1 (count (filter seq (:alerts msg))))
       (should= 1 (count (filter seq (:errors msg))))))
 

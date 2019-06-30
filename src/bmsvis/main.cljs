@@ -45,9 +45,10 @@
    :pan-nth       1
    :zoom          min-zoom
    :zoom-max      min-zoom
-   :alerts        (take 32 (repeatedly #(take (rand-int 3) (repeat {}))))
+   :alerts        []
    :errors        []
-   :info          []
+   :infos         []
+   :log           nil
    :tooltip       {:x    100
                    :y    100
                    :text nil}})
@@ -81,12 +82,15 @@
                    (drop pan-start)
                    (take pan-size))
         msg-groups (charts/ticks->msg-groups ticks pan-size)
+        log (when (< pan-size 257) ticks)
         ticks (if (> (count ticks) max-data-size)
                 (drop-while #(not (:cells %)) ticks)
                 ticks)
         ticks (take-nth pan-nth ticks)
         datasets (charts/ticks->datasets ticks)]
-    (swap! state merge msg-groups)
+    (swap! state #(-> %
+                      (merge msg-groups)
+                      (assoc :log log)))
     (update-chart! @cells-chart (:cells datasets))
     (update-chart! @batt-pack-chart (:batt-pack datasets))
     (update-chart! @amps-chart (:amps datasets))
@@ -128,11 +132,28 @@
           y (+ (.-clientY e) 20)]
       (swap! tooltip assoc
              :text (if (= 1 n)
-                     "Click to zoom."
+                     (str "Tick #" (:id (first ticks)) ". Click to zoom.")
                      (str "Click to zoom in on these " (name key) "s."))
              :lines (if (= 1 n) (get (first ticks) key) nil)
              :x x
              :y y))))
+
+(defn zoom-on-ticks [ticks]
+  (if (= 1 (count ticks))
+    (let [tick (first ticks)]
+      (swap! state #(-> %
+                        (assoc :zoom min-zoom)
+                        (assoc :pan-start (:id tick) :pan-size 1)
+                        calibrate-pan)))
+    (let [start (:id (first ticks))
+          end (:id (last ticks))
+          size (- end start)
+          zoom (max-zoom-level size)]
+      (swap! state #(-> %
+                        (assoc :zoom zoom)
+                        (assoc :pan-start start :pan-size size)
+                        calibrate-pan))))
+  (load-datasets))
 
 (defn message-tick [key ticks]
   (let [n (count ticks)]
@@ -140,7 +161,8 @@
       [:div.message-marker [:span.empty]]
       (let [id (str (name key) (:id (first ticks)))]
         [:div.message-marker {:onMouseOver #(message-tooltip %1 key ticks)
-                              :onMouseOut  #(swap! tooltip assoc :text nil :lines nil)}
+                              :onMouseOut  #(swap! tooltip assoc :text nil :lines nil)
+                              :onClick     #(zoom-on-ticks ticks)}
          [:span {:class (name key)}
           (cond
             (= n 0) ""
@@ -199,8 +221,8 @@
    [:div.charts
     [:div.messages-chart
      [message-chart (r/cursor state [:alerts]) :alert]
-     [message-chart (r/cursor state [:error]) :error]
-     [message-chart (r/cursor state [:info]) :info]]
+     [message-chart (r/cursor state [:errors]) :error]
+     [message-chart (r/cursor state [:infos]) :info]]
     [:div.chart
      [:p.chart-title "Cell Voltages"]
      [chart cells-chart charts/line-chart]]
@@ -212,9 +234,23 @@
      [chart amps-chart charts/line-chart]]
     [:div.chart
      [:p.chart-title "Temps"]
-     [chart temps-chart charts/line-chart]]
-
-    ]])
+     [chart temps-chart charts/line-chart]]]
+   [:p.chart-title "Info/Alert/Error Log (show only on high zoom)"]
+   [:div.log
+    (when-let [ticks (:log @state)]
+      (for [tick ticks]
+        (list
+          [:pre.plain "Tick #" (:id tick)]
+          (when (:info tick)
+            [:pre.info {:key (str (:id tick) "info")}
+             (str/join "\n" (:info tick))])
+          (when (:alert tick)
+            [:pre.alert {:key (str (:id tick) "alert")}
+             (str/join "\n" (:alert tick))])
+          (when (:error tick)
+            [:pre.error {:key (str (:id tick) "error")}
+             (str/join "\n" (:error tick))]))))]
+   ])
 
 
 (defn ^:export main []

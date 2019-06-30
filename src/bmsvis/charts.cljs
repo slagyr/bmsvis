@@ -113,5 +113,5 @@
         parts (partition part-size ticks)]
     {:alerts (map #(filter :alert %) parts)
      :errors (map #(filter :error %) parts)
-     :info (map #(filter :info %) parts)}))
+     :infos (map #(filter :info %) parts)}))
 
