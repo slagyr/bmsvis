@@ -21,7 +21,7 @@
   (it "generates cell datasets"
     (let [ticks (data/lines->timeline (str/split-lines sample/sample))
           cells (:cells (charts/ticks->datasets ticks))]
-      (should= [2 12 22] (:labels cells))
+      (should= [1 11 21] (:labels cells))
       (should= 10 (count (:datasets cells)))
       (should= (take 10 (repeat "rgba(255, 255, 255, 0)"))
                (map :backgroundColor (:datasets cells)))
@@ -32,29 +32,37 @@
       (should= (take 10 (repeat 3)) (map #(count (:data %)) (:datasets cells)))))
 
   (it "generates batt/pack datasets"
-      (let [ticks (data/lines->timeline (str/split-lines sample/sample))
-            volts (:batt-pack (charts/ticks->datasets ticks))]
-        (should= (range 2 23) (:labels volts))
-        (should= 2 (count (:datasets volts)))
-        (should= 21 (count (:data (first (:datasets volts)))))
-        (should= 21 (count (:data (second (:datasets volts)))))
-        ))
+    (let [ticks (data/lines->timeline (str/split-lines sample/sample))
+          volts (:batt-pack (charts/ticks->datasets ticks))]
+      (should= (range 1 22) (:labels volts))
+      (should= 2 (count (:datasets volts)))
+      (should= 21 (count (:data (first (:datasets volts)))))
+      (should= 21 (count (:data (second (:datasets volts)))))
+      ))
 
   (it "generates amps datasets"
-      (let [ticks (data/lines->timeline (str/split-lines sample/sample))
-            amps (:amps (charts/ticks->datasets ticks))]
-        (should= (range 2 23) (:labels amps))
-        (should= 1 (count (:datasets amps)))
-        (should= 21 (count (:data (first (:datasets amps)))))))
+    (let [ticks (data/lines->timeline (str/split-lines sample/sample))
+          amps (:amps (charts/ticks->datasets ticks))]
+      (should= (range 1 22) (:labels amps))
+      (should= 1 (count (:datasets amps)))
+      (should= 21 (count (:data (first (:datasets amps)))))))
 
   (it "generates temps datasets"
-      (let [ticks (data/lines->timeline (str/split-lines sample/sample))
-            temps (:temps (charts/ticks->datasets ticks))]
-        (should= [2 12 22] (:labels temps))
-        (should= 3 (count (:datasets temps)))
-        (should= 3 (count (:data (first (:datasets temps)))))
-        (should= 3 (count (:data (second (:datasets temps)))))
-        (should= 3 (count (:data (last (:datasets temps)))))))
+    (let [ticks (data/lines->timeline (str/split-lines sample/sample))
+          temps (:temps (charts/ticks->datasets ticks))]
+      (should= [1 11 21] (:labels temps))
+      (should= 3 (count (:datasets temps)))
+      (should= 3 (count (:data (first (:datasets temps)))))
+      (should= 3 (count (:data (second (:datasets temps)))))
+      (should= 3 (count (:data (last (:datasets temps)))))))
+
+  (it "generates message groups"
+    (let [ticks (data/lines->timeline (str/split-lines sample/sample))
+          msg (charts/ticks->msg-groups ticks 22)]
+      (should= 2 (count (filter seq (:info msg))))
+      (should= 1 (count (filter seq (:alerts msg))))
+      (should= 1 (count (filter seq (:errors msg))))))
+
   )
 
 

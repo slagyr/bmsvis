@@ -86,7 +86,7 @@
                                        "tick: 1, 2611"
                                        "info: 3"])]
       (should= 4 (count ticks))
-      (should= [1 2 3 4] (map :id ticks))
+      (should= [0 1 2 3] (map :id ticks))
       (should= [0 1 999 1] (map :_id ticks))
       (should= [0 2111 2361 2611] (map :time ticks))))
   )

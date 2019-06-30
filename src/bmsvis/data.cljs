@@ -82,7 +82,7 @@
   {:id id :_id 0 :time 0})
 
 (defn lines->timeline
-  ([lines] (lines->timeline lines 1))
+  ([lines] (lines->timeline lines 0))
   ([lines id]
    (let [[tick-lines remaining-lines] (split-tick-lines lines)]
      (if (seq tick-lines)

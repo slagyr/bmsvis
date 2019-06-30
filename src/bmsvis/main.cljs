@@ -7,8 +7,6 @@
             [cljsjs.chartjs]
             [clojure.string :as str]))
 
-;(def max-data-size 4096)
-;(def max-data-size 2048)
 (def max-data-size 1024)
 (def min-zoom 5)
 (def ln2 (.log js/Math 2))
@@ -46,10 +44,16 @@
    :pan-size      (zoom->tickn min-zoom)
    :pan-nth       1
    :zoom          min-zoom
-   :zoom-max      min-zoom})
+   :zoom-max      min-zoom
+   :alerts        (take 32 (repeatedly #(take (rand-int 3) (repeat {}))))
+   :errors        []
+   :info          []
+   :tooltip       {:x    100
+                   :y    100
+                   :text nil}})
 
 (def state (r/atom start-state))
-(def msg-chart (atom nil))
+(def tooltip (r/cursor state [:tooltip]))
 (def cells-chart (atom nil))
 (def batt-pack-chart (atom nil))
 (def amps-chart (atom nil))
@@ -75,10 +79,14 @@
   (let [{:keys [ticks pan-nth pan-start pan-size]} @state
         ticks (->> ticks
                    (drop pan-start)
-                   (drop-while #(not (:cells %)))
-                   (take pan-size)
-                   (take-nth pan-nth))
+                   (take pan-size))
+        msg-groups (charts/ticks->msg-groups ticks pan-size)
+        ticks (if (> (count ticks) max-data-size)
+                (drop-while #(not (:cells %)) ticks)
+                ticks)
+        ticks (take-nth pan-nth ticks)
         datasets (charts/ticks->datasets ticks)]
+    (swap! state merge msg-groups)
     (update-chart! @cells-chart (:cells datasets))
     (update-chart! @batt-pack-chart (:batt-pack datasets))
     (update-chart! @amps-chart (:amps datasets))
@@ -113,8 +121,51 @@
                               chart))
      :reagent-render      (fn [a] [:canvas])}))
 
+(defn message-tooltip [e key ticks]
+  (when-not (:text @tooltip)
+    (let [n (count ticks)
+          x (- (.-clientX e) 125)
+          y (+ (.-clientY e) 20)]
+      (swap! tooltip assoc
+             :text (if (= 1 n)
+                     "Click to zoom."
+                     (str "Click to zoom in on these " (name key) "s."))
+             :lines (if (= 1 n) (get (first ticks) key) nil)
+             :x x
+             :y y))))
+
+(defn message-tick [key ticks]
+  (let [n (count ticks)]
+    (if (= 0 n)
+      [:div.message-marker [:span.empty]]
+      (let [id (str (name key) (:id (first ticks)))]
+        [:div.message-marker {:onMouseOver #(message-tooltip %1 key ticks)
+                              :onMouseOut  #(swap! tooltip assoc :text nil :lines nil)}
+         [:span {:class (name key)}
+          (cond
+            (= n 0) ""
+            (> n 999) "999"
+            :else n)]]))))
+
+
+(defn message-chart [msgs-atom key]
+  (let [msgs @msgs-atom]
+    [:div.message-bar
+     [:div.message-bar-title (reduce #(+ %1 (count %2)) 0 msgs) " " (str (name key) "s")]
+     [:div.message-markers
+      (for [[i ticks] (map-indexed vector @msgs-atom)]
+        ^{:key (str key i)} [message-tick key ticks])]]))
+
 (defn body []
   [:div.main
+   [:div#tooltip {:style {:left       (:x @tooltip)
+                          :top        (:y @tooltip)
+                          :visibility (if (:text @tooltip) "visible" "hidden")}}
+    (when-let [text (:text @tooltip)]
+      [:span text])
+    (when-let [lines (:lines @tooltip)]
+      (for [[i line] (map-indexed vector lines)]
+        [:pre {:key i} line]))]
    [:div.upload
     [:h1.title "FlexBMS Log Visualizer"]
     [:label "bms.log file:"]
@@ -146,9 +197,10 @@
      [:span "Viewing " [:strong (:pan-size @state)] " ticks (max)."]]]
    [:div.title-border]
    [:div.charts
-    [:div.chart.bar
-     [:p.chart-title "Info, Alert & Errors"]
-     [chart msg-chart charts/bar-chart]]
+    [:div.messages-chart
+     [message-chart (r/cursor state [:alerts]) :alert]
+     [message-chart (r/cursor state [:error]) :error]
+     [message-chart (r/cursor state [:info]) :info]]
     [:div.chart
      [:p.chart-title "Cell Voltages"]
      [chart cells-chart charts/line-chart]]

@@ -24,11 +24,6 @@
                            :maintainAspectRatio false}
                  :data    starting-chart-data})
 
-(def bar-chart {:type    "bar"
-                :options {:responsive          true
-                          :maintainAspectRatio false}
-                :data    starting-chart-data})
-
 (defn fill-cells [datasets tick]
   (if-let [cells (:cells tick)]
     (let [cell-datasets (get-in datasets [:cells :datasets])]
@@ -111,4 +106,12 @@
                     :amps      amps
                     :temps     temps}
                    ticks)))
+
+(defn ticks->msg-groups [ticks size]
+  (let [part-n (min size 32)
+        part-size (.ceil js/Math (/ size part-n))
+        parts (partition part-size ticks)]
+    {:alerts (map #(filter :alert %) parts)
+     :errors (map #(filter :error %) parts)
+     :info (map #(filter :info %) parts)}))
 
